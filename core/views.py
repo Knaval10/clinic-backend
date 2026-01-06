@@ -7,20 +7,23 @@ from .serializers import HomePageSerializer, TestimonialSerializer, DoctorOvervi
 
 
 class HomePageAPIView(APIView):
-    authentication_classes = []   # public
-    permission_classes = []       # public
+    authentication_classes = []  # public
+    permission_classes = []      # public
 
     def get(self, request):
-        home = HomePage.objects.first()
-
-        if not home:
-            return Response(
-                {"detail": "Home page content not found"},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-
-        serializer = HomePageSerializer(home)
+        slides = HomePage.objects.all().order_by('id')  # fetch all slides
+        serializer = HomePageSerializer(slides, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        """
+        Add a new slide
+        """
+        serializer = HomePageSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class TestimonialListAPIView(generics.ListAPIView):
     queryset = Testimonial.objects.filter(is_approved=True).order_by('-created_at')

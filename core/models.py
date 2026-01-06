@@ -3,10 +3,13 @@ from django.utils.text import slugify
 from ckeditor.fields import RichTextField
 
 class HomePage(models.Model):
-    title = models.CharField(max_length=200)
+    title = models.CharField(max_length=200, blank=True)
     subtitle = models.CharField(max_length=300, blank=True)
-    banner_image = models.ImageField(upload_to="home/banner/")
     description = models.TextField(blank=True)
+    banner_image = models.ImageField(
+    upload_to="home/banner/",
+    default="home/default_banner.jpg"  # this will be used for existing rows
+)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):

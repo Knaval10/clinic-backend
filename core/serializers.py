@@ -3,17 +3,9 @@ from .models import HomePage, Testimonial, Services, ServicesMenus, Doctor
 
 
 class HomePageSerializer(serializers.ModelSerializer):
-    banner_image = serializers.ImageField(use_url=True)
-
     class Meta:
         model = HomePage
-        fields = [
-            "title",
-            "subtitle",
-            "description",
-            "banner_image",
-            "updated_at",
-        ]
+        fields = ['id', 'title', 'subtitle', 'description', 'banner_image', 'updated_at']
 
 class TestimonialSerializer(serializers.ModelSerializer):
     image = serializers.ImageField(use_url=True, required=False)

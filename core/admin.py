@@ -3,13 +3,9 @@ from .models import HomePage, Doctor, Testimonial, ContactMessage, Services, Ser
 
 @admin.register(HomePage)
 class HomePageAdmin(admin.ModelAdmin):
-    list_display = ("title", "updated_at")
-
-    # Allow only one HomePage instance
-    def has_add_permission(self, request):
-        if HomePage.objects.exists():
-            return False
-        return True
+    list_display = ['title', 'updated_at']
+    # Display JSON as pretty text in the admin
+    readonly_fields = ['updated_at']
     
 @admin.register(Doctor)
 class DoctorAdmin(admin.ModelAdmin):

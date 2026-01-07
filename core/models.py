@@ -1,7 +1,7 @@
 from django.db import models
 from django.utils.text import slugify
 from ckeditor.fields import RichTextField
-
+from django.core.exceptions import ValidationError
 class HomePage(models.Model):
     title = models.CharField(max_length=200, blank=True)
     subtitle = models.CharField(max_length=300, blank=True)
@@ -39,43 +39,48 @@ class Doctor(models.Model):
         verbose_name = "Doctor"
         verbose_name_plural = "Doctors"
 
-class ServicesMenus(models.Model):
+class Service(models.Model):
     name = models.CharField(max_length=100)
+
     parent = models.ForeignKey(
         "self",
         on_delete=models.CASCADE,
         blank=True,
         null=True,
-        related_name="sub_menus"
+        related_name="sub_services"
     )
+
     slug = models.SlugField(max_length=120, unique=True, blank=True)
 
+    # Service attributes
+    description = models.TextField(blank=True)
+    image = models.ImageField(upload_to="services/", blank=True, null=True)
+    extra_info = RichTextField(blank=True)
+
+    def clean(self):
+        """
+        Enforce max depth = 2
+        - Parent can exist
+        - Parent's parent MUST be None
+        """
+        if self.parent and self.parent.parent:
+            raise ValidationError(
+                "Services can only be nested up to 2 levels. "
+                "You cannot assign a parent that already has a parent."
+            )
+
     def save(self, *args, **kwargs):
+        self.full_clean()  # 🔒 ensures clean() is always enforced
+
         if not self.slug:
             self.slug = slugify(self.name)
+
         super().save(*args, **kwargs)
 
     def __str__(self):
         if self.parent:
             return f"{self.parent.name} → {self.name}"
         return self.name
-
-    class Meta:
-        verbose_name = "Service Menu"
-        verbose_name_plural = "Service Menus"
-
-class Services(models.Model):
-    menu = models.OneToOneField(
-        ServicesMenus,
-        on_delete=models.CASCADE,
-        related_name="service"
-    )
-    description = models.TextField(blank=True)
-    image = models.ImageField(upload_to="services/", blank=True, null=True)
-    extra_info = RichTextField(blank=True)  # <-- WYSIWYG editor
-
-    def __str__(self):
-        return f"Service content for {self.menu.name}"
 
     class Meta:
         verbose_name = "Service"
@@ -99,11 +104,12 @@ class Testimonial(models.Model):
 class ContactMessage(models.Model):
     name = models.CharField(max_length=100)
     email = models.EmailField()
+    subject = models.CharField(max_length=200, default='')
     message = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.name} - {self.email}"
+        return f"{self.name} - {self.email} - {self.subject}"
 
     class Meta:
         verbose_name = "Contact Message"

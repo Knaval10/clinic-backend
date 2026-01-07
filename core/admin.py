@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import HomePage, Doctor, Testimonial, ContactMessage, Services, ServicesMenus
+from .models import HomePage, Doctor, Testimonial, ContactMessage, Service
 
 @admin.register(HomePage)
 class HomePageAdmin(admin.ModelAdmin):
@@ -12,14 +12,15 @@ class DoctorAdmin(admin.ModelAdmin):
     list_display = ("name", "highest_degree", "years_of_experience", "slug")
     prepopulated_fields = {"slug": ("name",)}
 
-@admin.register(ServicesMenus)
-class ServicesMenusAdmin(admin.ModelAdmin):
+@admin.register(Service)
+class ServiceAdmin(admin.ModelAdmin):
     list_display = ("name", "parent", "slug")
     prepopulated_fields = {"slug": ("name",)}
 
-@admin.register(Services)
-class ServicesAdmin(admin.ModelAdmin):
-    list_display = ("menu",)
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "parent":
+            kwargs["queryset"] = Service.objects.filter(parent__isnull=True)
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 @admin.register(Testimonial)
 class TestimonialAdmin(admin.ModelAdmin):

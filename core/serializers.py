@@ -1,6 +1,5 @@
 from rest_framework import serializers
-from .models import HomePage, Testimonial, Services, ServicesMenus, Doctor
-
+from .models import HomePage, Testimonial, Service, Doctor, ContactMessage
 
 class HomePageSerializer(serializers.ModelSerializer):
     class Meta:
@@ -28,21 +27,21 @@ class DoctorDetailSerializer(serializers.ModelSerializer):
         model = Doctor
         fields = ["id", "name", "image", "highest_degree", "years_of_experience", "details", "slug"]
 
-class ServicesSerializer(serializers.ModelSerializer):
-    image = serializers.ImageField(use_url=True, required=False)
+class ServiceSerializer(serializers.ModelSerializer):
+    sub_services = serializers.SerializerMethodField()
 
     class Meta:
-        model = Services
-        fields = ["menu", "description", "image", "extra_info"]
+        model = Service
+        fields = [
+            "id", "name", "slug", "parent",
+            "description", "image", "extra_info", "sub_services"
+        ]
 
-class SubMenuSerializer(serializers.ModelSerializer):
+    def get_sub_services(self, obj):
+        children = obj.sub_services.all()
+        return ServiceSerializer(children, many=True).data
+
+class ContactMessageSerializer(serializers.ModelSerializer):
     class Meta:
-        model = ServicesMenus
-        fields = ["id", "name", "slug"]
-
-class ServicesMenusSerializer(serializers.ModelSerializer):
-    sub_menus = SubMenuSerializer(many=True, read_only=True)
-
-    class Meta:
-        model = ServicesMenus
-        fields = ["id", "name", "slug", "sub_menus"]
+        model = ContactMessage
+        fields = ['id', 'name', 'email', 'subject', 'message', 'created_at']

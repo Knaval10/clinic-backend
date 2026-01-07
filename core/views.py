@@ -1,9 +1,10 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, generics
+from rest_framework.decorators import api_view
 
-from .models import HomePage, Testimonial, Doctor, ServicesMenus, Services
-from .serializers import HomePageSerializer, TestimonialSerializer, DoctorOverviewSerializer, DoctorDetailSerializer, ServicesMenusSerializer, ServicesSerializer
+from .models import HomePage, Testimonial, Doctor, Service
+from .serializers import HomePageSerializer, TestimonialSerializer, DoctorOverviewSerializer, DoctorDetailSerializer, Service, ServiceSerializer, ContactMessageSerializer
 
 
 class HomePageAPIView(APIView):
@@ -46,17 +47,27 @@ class DoctorDetailAPIView(generics.RetrieveAPIView):
     authentication_classes = []
     permission_classes = []
 
-# List all top-level menus with submenus
-class ServicesMenusListAPIView(generics.ListAPIView):
-    queryset = ServicesMenus.objects.filter(parent__isnull=True)
-    serializer_class = ServicesMenusSerializer
-    authentication_classes = []
-    permission_classes = []
+class ServiceListAPIView(generics.ListAPIView):
+    queryset = Service.objects.filter(parent__isnull=True)
+    serializer_class = ServiceSerializer
+    authentication_classes = []  # no auth
+    permission_classes = []      # open to everyone
 
 # Detail content for a menu/submenu
 class ServicesDetailAPIView(generics.RetrieveAPIView):
-    queryset = Services.objects.all()
-    serializer_class = ServicesSerializer
-    lookup_field = "menu__slug"  # fetch by menu slug
+    queryset = Service.objects.all()
+    serializer_class = ServiceSerializer
+    lookup_field = "slug"  # fetch by menu slug
     authentication_classes = []
     permission_classes = []
+
+@api_view(['POST'])
+def contact_message_create(request):
+    serializer = ContactMessageSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(
+            {"message": "Message sent successfully!"},
+            status=status.HTTP_201_CREATED
+        )
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

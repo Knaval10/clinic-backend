@@ -4,18 +4,13 @@ import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# --------------------------------------------------
-# CORE SETTINGS
-# --------------------------------------------------
+# ------------------ CORE ------------------
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-secret-key")
+DEBUG = os.environ.get("DEBUG", "True").lower() == "true"
 
-DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "127.0.0.1").split(",")
 
-ALLOWED_HOSTS = ["clinic-backend-quds.onrender.com", "127.0.0.1"]
-
-# --------------------------------------------------
-# APPLICATIONS
-# --------------------------------------------------
+# ------------------ APPS ------------------
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -31,12 +26,10 @@ INSTALLED_APPS = [
     "core.apps.CoreConfig",
 ]
 
-# --------------------------------------------------
-# MIDDLEWARE
-# --------------------------------------------------
+# ------------------ MIDDLEWARE ------------------
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # Must be after SecurityMiddleware
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -46,12 +39,9 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-
 CORS_ALLOW_ALL_ORIGINS = True
 
-# --------------------------------------------------
-# URL / WSGI
-# --------------------------------------------------
+# ------------------ URL / WSGI ------------------
 ROOT_URLCONF = "config.urls"
 
 TEMPLATES = [
@@ -72,12 +62,11 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-# --------------------------------------------------
-# DATABASE (🔥 BULLETPROOF FIX)
-# --------------------------------------------------
+# ------------------ DATABASE ------------------
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 if DATABASE_URL and DATABASE_URL.strip():
+    # Production / external DB
     DATABASES = {
         "default": dj_database_url.parse(
             DATABASE_URL.strip(),
@@ -86,8 +75,7 @@ if DATABASE_URL and DATABASE_URL.strip():
         )
     }
 else:
-    if not DEBUG:
-        raise Exception("DATABASE_URL must be set in production")
+    # Local / SQLite fallback
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
@@ -95,10 +83,7 @@ else:
         }
     }
 
-
-# --------------------------------------------------
-# PASSWORD VALIDATION
-# --------------------------------------------------
+# ------------------ PASSWORD VALIDATION ------------------
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
@@ -106,19 +91,16 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
-# --------------------------------------------------
-# I18N
-# --------------------------------------------------
+# ------------------ I18N ------------------
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 
-# --------------------------------------------------
-# STATIC / MEDIA
-# --------------------------------------------------
+# ------------------ STATIC / MEDIA ------------------
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
@@ -126,5 +108,3 @@ MEDIA_ROOT = BASE_DIR / "media"
 CKEDITOR_UPLOAD_PATH = "uploads/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"

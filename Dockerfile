@@ -1,31 +1,34 @@
-# Use official Python slim image
+# ---------- BASE IMAGE ----------
 FROM python:3.12-slim
 
-# Environment variables
+# ---------- ENVIRONMENT VARIABLES ----------
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Set working directory
+# ---------- WORKING DIRECTORY ----------
 WORKDIR /app
 
-# System dependencies
+# ---------- SYSTEM DEPENDENCIES ----------
 RUN apt-get update && apt-get install -y \
-    build-essential libpq-dev libjpeg-dev zlib1g-dev libmagic-dev \
+    build-essential \
+    libpq-dev \
+    libjpeg-dev \
+    zlib1g-dev \
+    libmagic-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install
+# ---------- PYTHON DEPENDENCIES ----------
 COPY requirements.txt /app/
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
-# Copy project
+# ---------- COPY PROJECT ----------
 COPY . /app/
 
-# Collect static files at runtime instead of build
-# Render recommends running collectstatic as a start command
+# ---------- EXPOSE PORT ----------
+# Render injects $PORT at runtime
+EXPOSE 10000
 
-# Expose port
-EXPOSE 10000  # Render uses $PORT variable, we will use CMD below
-
-# Run server
+# ---------- RUN DJANGO SERVER ----------
+# Collect static files at runtime, then start Gunicorn
 CMD bash -c "python manage.py collectstatic --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT"

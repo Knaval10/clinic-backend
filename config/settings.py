@@ -1,31 +1,19 @@
 """
 Django settings for config project.
+Production-ready for Docker + Render deployment.
 """
 
 import os
-import dj_database_url
 from pathlib import Path
+import dj_database_url
 
+# ---------------- BASE DIR ----------------
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# ---------------- SECURITY ----------------
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-secret-key")
 DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "*").split(",")
-
-# ---------------- DATABASE ----------------
-DATABASE_URL = os.environ.get('DATABASE_URL')
-
-if DATABASE_URL:  # Use PostgreSQL if DATABASE_URL is set
-    DATABASES = {
-        'default': dj_database_url.config(default=DATABASE_URL, conn_max_age=600)
-    }
-else:  # Fallback to SQLite locally
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
 
 # ---------------- INSTALLED APPS ----------------
 INSTALLED_APPS = [
@@ -46,7 +34,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',  # Cors should be high up
+    'corsheaders.middleware.CorsMiddleware',  # should be high
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -67,7 +55,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],  # Add template dirs if needed
+        'DIRS': [],  # Add your template dirs here
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -78,6 +66,25 @@ TEMPLATES = [
         },
     },
 ]
+
+# ---------------- DATABASE ----------------
+DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
+
+if DATABASE_URL:  # Only parse if non-empty
+    DATABASES = {
+        "default": dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            ssl_require=True,  # required for Render Postgres
+        )
+    }
+else:  # Fallback to SQLite
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 # ---------------- PASSWORD VALIDATION ----------------
 AUTH_PASSWORD_VALIDATORS = [
@@ -95,10 +102,10 @@ USE_TZ = True
 
 # ---------------- STATIC & MEDIA ----------------
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_ROOT = BASE_DIR / 'staticfiles'  # for collectstatic in Docker
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = BASE_DIR / 'media'  # for CKEditor uploads
 
 CKEDITOR_UPLOAD_PATH = "uploads/"
 

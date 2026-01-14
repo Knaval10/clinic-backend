@@ -70,12 +70,25 @@ TEMPLATES = [
 # ---------------- DATABASE ----------------
 DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
 
-if DATABASE_URL:  # Only parse if non-empty
+import os
+from pathlib import Path
+import dj_database_url
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-secret-key")
+DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "*").split(",")
+
+# DATABASE
+DATABASE_URL = os.environ.get("DATABASE_URL")  # Could be None or empty
+
+if DATABASE_URL and DATABASE_URL.strip():  # Only use if non-empty
     DATABASES = {
-        "default": dj_database_url.config(
-            default=DATABASE_URL,
+        "default": dj_database_url.parse(
+            DATABASE_URL.strip(),
             conn_max_age=600,
-            ssl_require=True,  # required for Render Postgres
+            ssl_require=True
         )
     }
 else:  # Fallback to SQLite
@@ -85,7 +98,7 @@ else:  # Fallback to SQLite
             "NAME": BASE_DIR / "db.sqlite3",
         }
     }
-
+    
 # ---------------- PASSWORD VALIDATION ----------------
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},

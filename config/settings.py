@@ -2,19 +2,30 @@
 Django settings for config project.
 """
 
-from pathlib import Path
 import os
 import dj_database_url
+from pathlib import Path
 
-# ---------------- BASE DIR ----------------
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# ---------------- SECURITY ----------------
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-secret-key")
 DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
-
-# ALLOWED_HOSTS
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "*").split(",")
+
+# ---------------- DATABASE ----------------
+DATABASE_URL = os.environ.get('DATABASE_URL')
+
+if DATABASE_URL:  # Use PostgreSQL if DATABASE_URL is set
+    DATABASES = {
+        'default': dj_database_url.config(default=DATABASE_URL, conn_max_age=600)
+    }
+else:  # Fallback to SQLite locally
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 # ---------------- INSTALLED APPS ----------------
 INSTALLED_APPS = [
@@ -67,13 +78,6 @@ TEMPLATES = [
         },
     },
 ]
-
-# ---------------- DATABASE ----------------
-DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL', f"sqlite:///{BASE_DIR / 'db.sqlite3'}")
-    )
-}
 
 # ---------------- PASSWORD VALIDATION ----------------
 AUTH_PASSWORD_VALIDATORS = [

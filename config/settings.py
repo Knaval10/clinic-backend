@@ -11,8 +11,7 @@ SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-secret-key")
 
 DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
 
-ALLOWED_HOSTS = ["https://clinic-backend-quds.onrender.com", "127.0.0.1"]
-
+ALLOWED_HOSTS = ["clinic-backend-quds.onrender.com", "127.0.0.1"]
 
 # --------------------------------------------------
 # APPLICATIONS

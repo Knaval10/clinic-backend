@@ -1,3 +1,5 @@
 
 #environment 
 venv
+# Django static files
+/staticfiles/

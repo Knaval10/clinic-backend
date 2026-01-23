@@ -110,7 +110,7 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 # ------------------ MEDIA ------------------
 # Use Render Persistent Disk for media
 MEDIA_URL = "/media/"
-MEDIA_ROOT = Path("/opt/render/project/src/media")  # <- Render persistent disk
+MEDIA_ROOT = BASE_DIR / "media"  # Simple local path
 
 CKEDITOR_UPLOAD_PATH = "uploads/"
 

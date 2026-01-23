@@ -1,16 +1,20 @@
 from pathlib import Path
 import os
 import dj_database_url
+from dotenv import load_dotenv
 
+# ------------------ LOAD ENV ------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / ".env")
 
 # ------------------ CORE ------------------
-SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "e9a6be9468935561e321b5faf5f2413b")
-DEBUG = os.environ.get("DEBUG", "True").lower() == "true"
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
+if not SECRET_KEY:
+    raise ValueError("Missing DJANGO_SECRET_KEY environment variable")
 
-# ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "127.0.0.1").split(",")
-ALLOWED_HOSTS = ['*']
+DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
 
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "").split(",")
 
 # ------------------ APPS ------------------
 INSTALLED_APPS = [
@@ -21,17 +25,19 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
+    # Third-party apps
     "rest_framework",
     "corsheaders",
     "ckeditor",
 
+    # Local apps
     "core.apps.CoreConfig",
 ]
 
 # ------------------ MIDDLEWARE ------------------
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",  # Must be after SecurityMiddleware
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # Static files in production
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -41,7 +47,8 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = os.environ.get("CORS_ALLOW_ALL_ORIGINS", "True").lower() == "true"
+CORS_ALLOWED_ORIGINS = os.environ.get("CORS_ALLOWED_ORIGINS", "").split(",")
 
 # ------------------ URL / WSGI ------------------
 ROOT_URLCONF = "config.urls"
@@ -66,15 +73,10 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 # ------------------ DATABASE ------------------
 DATABASE_URL = os.environ.get("DATABASE_URL")
-
 if DATABASE_URL and DATABASE_URL.strip():
     # Production / external DB
     DATABASES = {
-        "default": dj_database_url.parse(
-            DATABASE_URL.strip(),
-            conn_max_age=600,
-            ssl_require=True,
-        )
+        "default": dj_database_url.parse(DATABASE_URL.strip(), conn_max_age=600, ssl_require=True)
     }
 else:
     # Local / SQLite fallback
@@ -107,6 +109,8 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+# ------------------ CKEDITOR ------------------
 CKEDITOR_UPLOAD_PATH = "uploads/"
 
+# ------------------ DEFAULT AUTO FIELD ------------------
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

@@ -2,14 +2,33 @@ from django.db import models
 from django.utils.text import slugify
 from ckeditor.fields import RichTextField
 from django.core.exceptions import ValidationError
+import itertools
+
+# ------------------ Helper ------------------
+def generate_unique_slug(instance, field_name):
+    """
+    Generate a unique slug for a model based on a field.
+    """
+    base_slug = slugify(getattr(instance, field_name))
+    slug = base_slug
+    for i in itertools.count(1):
+        if not type(instance).objects.filter(slug=slug).exists():
+            return slug
+        slug = f"{base_slug}-{i}"
+
+
+# ------------------ Models ------------------
+
 class HomePage(models.Model):
     title = models.CharField(max_length=200, blank=True)
     subtitle = models.CharField(max_length=300, blank=True)
     description = models.TextField(blank=True)
     banner_image = models.ImageField(
-    upload_to="home/banner/",
-    default="home/default_banner.jpg"  # this will be used for existing rows
-)
+        upload_to="home/banner/",
+        default="home/default_banner.jpg",  # Ensure this exists in Cloudinary
+        blank=True,
+        null=True
+    )
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
@@ -18,6 +37,7 @@ class HomePage(models.Model):
     class Meta:
         verbose_name = "Home Page"
         verbose_name_plural = "Home Page"
+
 
 class Doctor(models.Model):
     name = models.CharField(max_length=100)
@@ -29,7 +49,7 @@ class Doctor(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugify(self.name)
+            self.slug = generate_unique_slug(self, "name")
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -39,9 +59,9 @@ class Doctor(models.Model):
         verbose_name = "Doctor"
         verbose_name_plural = "Doctors"
 
+
 class Service(models.Model):
     name = models.CharField(max_length=100)
-
     parent = models.ForeignKey(
         "self",
         on_delete=models.CASCADE,
@@ -49,19 +69,16 @@ class Service(models.Model):
         null=True,
         related_name="sub_services"
     )
-
     slug = models.SlugField(max_length=120, unique=True, blank=True)
-
-    # Service attributes
     description = models.TextField(blank=True)
     image = models.ImageField(upload_to="services/", blank=True, null=True)
     extra_info = RichTextField(blank=True)
 
     def clean(self):
         """
-        Enforce max depth = 2
-        - Parent can exist
-        - Parent's parent MUST be None
+        Enforce max depth = 2.
+        - Parent can exist.
+        - Parent's parent MUST be None.
         """
         if self.parent and self.parent.parent:
             raise ValidationError(
@@ -71,10 +88,8 @@ class Service(models.Model):
 
     def save(self, *args, **kwargs):
         self.full_clean()  # 🔒 ensures clean() is always enforced
-
         if not self.slug:
-            self.slug = slugify(self.name)
-
+            self.slug = generate_unique_slug(self, "name")
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -86,8 +101,9 @@ class Service(models.Model):
         verbose_name = "Service"
         verbose_name_plural = "Services"
 
+
 class Testimonial(models.Model):
-    name = models.CharField(max_length=100)  # anyone: patient, doctor, staff
+    name = models.CharField(max_length=100)  # Patient, doctor, staff
     designation = models.CharField(max_length=100, blank=True)  # free-text input
     message = models.TextField()
     image = models.ImageField(upload_to="testimonials/", blank=True, null=True)
@@ -101,10 +117,11 @@ class Testimonial(models.Model):
         verbose_name = "Testimonial"
         verbose_name_plural = "Testimonials"
 
+
 class ContactMessage(models.Model):
     name = models.CharField(max_length=100)
     email = models.EmailField()
-    subject = models.CharField(max_length=200, default='')
+    subject = models.CharField(max_length=200, default='', blank=True)
     message = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 

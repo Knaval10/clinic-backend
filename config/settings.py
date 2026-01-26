@@ -11,7 +11,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY
 # --------------------------------------------------
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "unsafe-default-key")
-
 DEBUG = os.environ.get("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = [
@@ -61,19 +60,49 @@ MIDDLEWARE = [
 # URL / WSGI
 # --------------------------------------------------
 ROOT_URLCONF = "config.urls"
-
 WSGI_APPLICATION = "config.wsgi.application"
+
+# --------------------------------------------------
+# TEMPLATES (required for admin)
+# --------------------------------------------------
+TEMPLATES = [
+    {
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [BASE_DIR / "templates"],  # optional, if you have custom templates
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",  # required by admin
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+            ],
+        },
+    },
+]
 
 # --------------------------------------------------
 # DATABASE
 # --------------------------------------------------
-DATABASES = {
-    "default": dj_database_url.config(
-        default=os.environ.get("DATABASE_URL"),
-        conn_max_age=600,
-        ssl_require=True,
-    )
-}
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+if DATABASE_URL and DATABASE_URL.startswith("postgres"):
+    DATABASES = {
+        "default": dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            ssl_require=True,  # SSL only for Postgres
+        )
+    }
+else:
+    # local fallback to SQLite
+    DATABASES = {
+        "default": dj_database_url.config(
+            default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+            conn_max_age=600,
+            ssl_require=False,  # SQLite does NOT support SSL
+        )
+    }
 
 # --------------------------------------------------
 # PASSWORD VALIDATION
@@ -98,17 +127,29 @@ USE_TZ = True
 # --------------------------------------------------
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # --------------------------------------------------
-# MEDIA (CLOUDINARY)
+# MEDIA (Cloudinary)
 # --------------------------------------------------
-# Uses CLOUDINARY_URL from environment automatically
-DEFAULT_FILE_STORAGE = "django_cloudinary_storage.storage.MediaCloudinaryStorage"
+# Use official Cloudinary SDK with CloudinaryField in models
+# Ensure CLOUDINARY_URL is set in environment
+# No django-cloudinary-storage
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+
+CLOUDINARY_URL = os.environ.get("CLOUDINARY_URL")
+if CLOUDINARY_URL:
+    cloudinary.config(
+        cloud_name=CLOUDINARY_URL.split("@")[-1],
+        api_key=CLOUDINARY_URL.split("://")[1].split(":")[0],
+        api_secret=CLOUDINARY_URL.split(":")[-1].split("@")[0],
+        secure=True
+    )
 
 # --------------------------------------------------
-# CORS (if API is consumed by frontend)
+# CORS
 # --------------------------------------------------
 CORS_ALLOW_ALL_ORIGINS = True
 

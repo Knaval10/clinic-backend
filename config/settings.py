@@ -1,29 +1,28 @@
-# ===================== settings.py =====================
 import os
 from pathlib import Path
-from dotenv import load_dotenv
 import dj_database_url
 
-# ------------------ BASE DIR ------------------
+# ---------------------------
+# Base
+# ---------------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# ------------------ ENV ------------------
-load_dotenv(BASE_DIR / ".env")
+# ---------------------------
+# Secret key & debug
+# ---------------------------
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "unsafe-default-key")
+DEBUG = os.environ.get("DEBUG", "False") == "True"
 
-# ------------------ CORE ------------------
-SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
-if not SECRET_KEY:
-    raise RuntimeError("Missing DJANGO_SECRET_KEY")
+# ---------------------------
+# Allowed hosts
+# ---------------------------
+ALLOWED_HOSTS = [".onrender.com", "localhost", "127.0.0.1"]
 
-DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
-
-ALLOWED_HOSTS = os.environ.get(
-    "ALLOWED_HOSTS",
-    "localhost,127.0.0.1,.onrender.com"
-).split(",")
-
-# ------------------ APPS ------------------
+# ---------------------------
+# Installed apps
+# ---------------------------
 INSTALLED_APPS = [
+    # Django default
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -31,21 +30,20 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
-    "rest_framework",
-    "corsheaders",
-    "ckeditor",
-
+    # Optional: Cloudinary for media
     "cloudinary",
     "cloudinary_storage",
 
-    "core.apps.CoreConfig",
+    # Your apps
+    "clinic",  # Replace with your app name
 ]
 
-# ------------------ MIDDLEWARE ------------------
+# ---------------------------
+# Middleware
+# ---------------------------
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",
-    "corsheaders.middleware.CorsMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # Static files for Docker
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -54,14 +52,29 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True
+# ---------------------------
+# URL and WSGI
+# ---------------------------
+ROOT_URLCONF = "config.urls"  # Replace with your project name
+WSGI_APPLICATION = "config.wsgi.application"  # Replace with your project name
 
-# ------------------ URLS ------------------
-ROOT_URLCONF = "config.urls"
+# ---------------------------
+# Database (PostgreSQL via Render)
+# ---------------------------
+DATABASES = {
+    "default": dj_database_url.config(
+        default=os.environ.get("DATABASE_URL"),
+        conn_max_age=600,
+    )
+}
 
+# ---------------------------
+# Templates
+# ---------------------------
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [BASE_DIR / "templates"],  # optional
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -71,62 +84,56 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
             ],
         },
+    }
+]
+
+# ---------------------------
+# Password validation
+# ---------------------------
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 
-WSGI_APPLICATION = "config.wsgi.application"
-
-# ------------------ DATABASE ------------------
-# ------------------ DATABASE ------------------
-DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
-
-if DATABASE_URL:
-    DATABASES = {
-        "default": dj_database_url.parse(
-            DATABASE_URL,
-            conn_max_age=600,
-        )
-    }
-else:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
-        }
-    }
-
-# ------------------ PASSWORDS ------------------
-AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
-    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
-    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
-]
-
-# ------------------ I18N ------------------
+# ---------------------------
+# Internationalization
+# ---------------------------
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 
-# ------------------ STATIC ------------------
+# ---------------------------
+# Static files (for Docker + Whitenoise)
+# ---------------------------
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# Enable WhiteNoise for Docker
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-# ------------------ MEDIA (CLOUDINARY) ------------------
+# ---------------------------
+# Media files (optional Cloudinary)
+# ---------------------------
 DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
-MEDIA_URL = "/media/"
 
-# ------------------ CKEDITOR ------------------
-CKEDITOR_UPLOAD_PATH = "uploads/"
-
-# ------------------ REST ------------------
-REST_FRAMEWORK = {
-    "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.AllowAny",
-    ]
+CLOUDINARY_STORAGE = {
+    "CLOUD_NAME": os.environ.get("CLOUDINARY_CLOUD_NAME", ""),
+    "API_KEY": os.environ.get("CLOUDINARY_API_KEY", ""),
+    "API_SECRET": os.environ.get("CLOUDINARY_API_SECRET", ""),
 }
 
-# ------------------ AUTO FIELD ------------------
+# ---------------------------
+# Default primary key
+# ---------------------------
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

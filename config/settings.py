@@ -16,7 +16,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
-    "core",  # ✅ your app
+    "core",  # ✅ your app folder
     "rest_framework",
     "corsheaders",
     "cloudinary",

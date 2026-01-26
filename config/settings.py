@@ -35,7 +35,7 @@ INSTALLED_APPS = [
     "cloudinary_storage",
 
     # Your apps
-    "clinic",  # Replace with your app name
+    "core",  # Replace with your app name
 ]
 
 # ---------------------------

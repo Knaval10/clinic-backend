@@ -1,29 +1,29 @@
-# Base image
+# 1. Base image
 FROM python:3.11-slim
 
-# Environment
+# 2. Environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Working directory
+# 3. Working directory
 WORKDIR /app
 
-# Copy & install dependencies
+# 4. Copy and install dependencies first
 COPY requirements.txt .
+RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy project
+# 5. Copy the rest of the project
 COPY . .
 
-# Expose Render port
+# 6. Expose the port Render expects
 EXPOSE 10000
 
-# Run migrations, collectstatic, create superuser, start Gunicorn
-CMD python -c "import os, django; from django.contrib.auth import get_user_model; \
-os.environ.setdefault('DJANGO_SETTINGS_MODULE','config.settings'); django.setup(); \
+# 7. Run migrations, collectstatic, create superuser, then start Gunicorn
+CMD python manage.py migrate && \
+    python manage.py collectstatic --noinput && \
+    python manage.py shell -c "from django.contrib.auth import get_user_model; \
 User=get_user_model(); \
 User.objects.create_superuser('sujeet', password='sujeetclinic') \
 if not User.objects.filter(username='sujeet').exists() else None" && \
-python manage.py migrate && \
-python manage.py collectstatic --noinput && \
-gunicorn config.wsgi:application --bind 0.0.0.0:$PORT
+    gunicorn config.wsgi:application --bind 0.0.0.0:$PORT

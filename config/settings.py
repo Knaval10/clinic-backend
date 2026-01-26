@@ -20,7 +20,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "corsheaders",
     "cloudinary",
-    "django_cloudinary_storage",
+    "django-cloudinary-storage",
     "ckeditor",
 ]
 

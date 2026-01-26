@@ -9,8 +9,6 @@ python-dotenv
 djangorestframework
 django-cors-headers
 
-django-cloudinary-storage==0.3.0
 cloudinary==1.39.0
-
 django-ckeditor
 Pillow

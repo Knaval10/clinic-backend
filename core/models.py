@@ -2,13 +2,12 @@ from django.db import models
 from django.utils.text import slugify
 from ckeditor.fields import RichTextField
 from django.core.exceptions import ValidationError
+from cloudinary.models import CloudinaryField
 import itertools
+
 
 # ------------------ Helper ------------------
 def generate_unique_slug(instance, field_name):
-    """
-    Generate a unique slug for a model based on a field.
-    """
     base_slug = slugify(getattr(instance, field_name))
     slug = base_slug
     for i in itertools.count(1):
@@ -23,12 +22,13 @@ class HomePage(models.Model):
     title = models.CharField(max_length=200, blank=True)
     subtitle = models.CharField(max_length=300, blank=True)
     description = models.TextField(blank=True)
-    banner_image = models.ImageField(
-        upload_to="home/banner/",
-        default="home/default_banner.jpg",  # Ensure this exists in Cloudinary
+
+    banner_image = CloudinaryField(
+        "banner_image",
         blank=True,
         null=True
     )
+
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
@@ -41,7 +41,13 @@ class HomePage(models.Model):
 
 class Doctor(models.Model):
     name = models.CharField(max_length=100)
-    image = models.ImageField(upload_to="doctors/", blank=True, null=True)
+
+    image = CloudinaryField(
+        "doctor_image",
+        blank=True,
+        null=True
+    )
+
     highest_degree = models.CharField(max_length=100)
     years_of_experience = models.PositiveIntegerField(blank=True, null=True)
     details = models.TextField(blank=True)
@@ -71,31 +77,29 @@ class Service(models.Model):
     )
     slug = models.SlugField(max_length=120, unique=True, blank=True)
     description = models.TextField(blank=True)
-    image = models.ImageField(upload_to="services/", blank=True, null=True)
+
+    image = CloudinaryField(
+        "service_image",
+        blank=True,
+        null=True
+    )
+
     extra_info = RichTextField(blank=True)
 
     def clean(self):
-        """
-        Enforce max depth = 2.
-        - Parent can exist.
-        - Parent's parent MUST be None.
-        """
         if self.parent and self.parent.parent:
             raise ValidationError(
-                "Services can only be nested up to 2 levels. "
-                "You cannot assign a parent that already has a parent."
+                "Services can only be nested up to 2 levels."
             )
 
     def save(self, *args, **kwargs):
-        self.full_clean()  # 🔒 ensures clean() is always enforced
+        self.full_clean()
         if not self.slug:
             self.slug = generate_unique_slug(self, "name")
         super().save(*args, **kwargs)
 
     def __str__(self):
-        if self.parent:
-            return f"{self.parent.name} → {self.name}"
-        return self.name
+        return f"{self.parent.name} → {self.name}" if self.parent else self.name
 
     class Meta:
         verbose_name = "Service"
@@ -103,10 +107,16 @@ class Service(models.Model):
 
 
 class Testimonial(models.Model):
-    name = models.CharField(max_length=100)  # Patient, doctor, staff
-    designation = models.CharField(max_length=100, blank=True)  # free-text input
+    name = models.CharField(max_length=100)
+    designation = models.CharField(max_length=100, blank=True)
     message = models.TextField()
-    image = models.ImageField(upload_to="testimonials/", blank=True, null=True)
+
+    image = CloudinaryField(
+        "testimonial_image",
+        blank=True,
+        null=True
+    )
+
     is_approved = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -121,7 +131,7 @@ class Testimonial(models.Model):
 class ContactMessage(models.Model):
     name = models.CharField(max_length=100)
     email = models.EmailField()
-    subject = models.CharField(max_length=200, default='', blank=True)
+    subject = models.CharField(max_length=200, default="", blank=True)
     message = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 

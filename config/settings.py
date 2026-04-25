@@ -106,7 +106,7 @@ TEMPLATES = [
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 if DATABASE_URL:
-    ssl_require = "localhost" not in DATABASE_URL and "127.0.0.1" not in DATABASE_URL and not DATABASE_URL.startswith("sqlite")
+    ssl_require = "localhost" not in DATABASE_URL and "127.0.0.1" not in DATABASE_URL and "db" not in DATABASE_URL and not DATABASE_URL.startswith("sqlite")
     DATABASES = {
         "default": dj_database_url.config(
             default=DATABASE_URL,
@@ -118,11 +118,11 @@ else:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
-            "NAME": "clinic_db",
-            "USER": "postgres",
-            "PASSWORD": "password",
-            "HOST": "localhost",
-            "PORT": "5432",
+            "NAME": os.environ.get("DB_NAME", "clinic_db"),
+            "USER": os.environ.get("DB_USER", "postgres"),
+            "PASSWORD": os.environ.get("DB_PASSWORD", "password"),
+            "HOST": os.environ.get("DB_HOST", "db"),
+            "PORT": os.environ.get("DB_PORT", "5432"),
         }
     }
 

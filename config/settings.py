@@ -2,22 +2,41 @@ import os
 from pathlib import Path
 import dj_database_url
 import cloudinary
+from dotenv import load_dotenv
 
 # ----------------------
 # BASE
 # ----------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+load_dotenv(os.path.join(BASE_DIR, ".env"))
+
 # ----------------------
 # SECURITY
 # ----------------------
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "unsafe-default-key")
 DEBUG = os.environ.get("DEBUG", "False") == "True"
-ALLOWED_HOSTS = [
-    ".onrender.com",
-    "localhost",
-    "127.0.0.1",
-]
+ENVIRONMENT = os.environ.get("ENVIRONMENT", "development")
+IS_PRODUCTION = ENVIRONMENT == "production"
+
+allowed_hosts_env = os.environ.get("ALLOWED_HOSTS")
+if allowed_hosts_env:
+    ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_env.split(",")]
+else:
+    ALLOWED_HOSTS = [
+        ".onrender.com",
+        "localhost",
+        "127.0.0.1",
+    ]
+
+if IS_PRODUCTION:
+    SECURE_SSL_REDIRECT = True
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
 
 # ----------------------
 # INSTALLED APPS
@@ -86,21 +105,25 @@ TEMPLATES = [
 # ----------------------
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
-if DATABASE_URL and DATABASE_URL.startswith("postgres"):
+if DATABASE_URL:
+    ssl_require = "localhost" not in DATABASE_URL and "127.0.0.1" not in DATABASE_URL and not DATABASE_URL.startswith("sqlite")
     DATABASES = {
         "default": dj_database_url.config(
             default=DATABASE_URL,
             conn_max_age=600,
-            ssl_require=True,  # PostgreSQL only
+            ssl_require=ssl_require,
         )
     }
 else:
     DATABASES = {
-        "default": dj_database_url.config(
-            default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
-            conn_max_age=600,
-            ssl_require=False,  # SQLite
-        )
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": "clinic_db",
+            "USER": "postgres",
+            "PASSWORD": "password",
+            "HOST": "localhost",
+            "PORT": "5432",
+        }
     }
 
 # ----------------------
@@ -142,9 +165,45 @@ if CLOUDINARY_URL:
 # ----------------------
 # CORS
 # ----------------------
-CORS_ALLOW_ALL_ORIGINS = True
+cors_allowed_origins_env = os.environ.get("CORS_ALLOWED_ORIGINS")
+if cors_allowed_origins_env:
+    CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_allowed_origins_env.split(",")]
+    CORS_ALLOW_ALL_ORIGINS = False
+else:
+    CORS_ALLOW_ALL_ORIGINS = True
 
 # ----------------------
 # DEFAULT PRIMARY KEY
 # ----------------------
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# ----------------------
+# LOGGING
+# ----------------------
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "[{asctime}] {levelname} [{name}:{lineno}] {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO",
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": os.environ.get("DJANGO_LOG_LEVEL", "INFO"),
+            "propagate": False,
+        },
+    },
+}

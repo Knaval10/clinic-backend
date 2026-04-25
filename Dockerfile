@@ -19,8 +19,7 @@ EXPOSE 10000
 # Run migrations, collect static, create superuser, then start Gunicorn
 CMD python manage.py migrate && \
     python manage.py collectstatic --noinput && \
-    python manage.py shell -c "from django.contrib.auth import get_user_model; \
-User = get_user_model(); \
-User.objects.create_superuser('sujeet', password='sujeetclinic') \
-if not User.objects.filter(username='sujeet').exists() else None" && \
+    if [ -n "$DJANGO_SUPERUSER_USERNAME" ] && [ -n "$DJANGO_SUPERUSER_PASSWORD" ] && [ -n "$DJANGO_SUPERUSER_EMAIL" ]; then \
+        python manage.py createsuperuser --noinput || true; \
+    fi && \
     gunicorn config.wsgi:application --bind 0.0.0.0:$PORT

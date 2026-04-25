@@ -6,7 +6,8 @@ from .views import (
     DoctorDetailAPIView,
     ServiceListAPIView,      
     ServicesDetailAPIView,
-    contact_message_create     
+    contact_message_create,
+    AboutUsAPIView
 )
 
 urlpatterns = [
@@ -21,4 +22,5 @@ urlpatterns = [
     # Single service detail by slug
     path("services/<slug:slug>/", ServicesDetailAPIView.as_view(), name="api-services-detail"),
     path('api/contact/', contact_message_create, name='contact-message-create'),
+    path('about-us/', AboutUsAPIView.as_view(), name='api-about-us'),
 ]

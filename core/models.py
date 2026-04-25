@@ -32,11 +32,11 @@ class HomePage(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return "Home Page Content"
+        return self.title if self.title else f"Home Page Slide {self.id}"
 
     class Meta:
-        verbose_name = "Home Page"
-        verbose_name_plural = "Home Page"
+        verbose_name = "Home Page Slide"
+        verbose_name_plural = "Home Page Slides"
 
 
 class Doctor(models.Model):
@@ -49,8 +49,9 @@ class Doctor(models.Model):
     )
 
     highest_degree = models.CharField(max_length=100)
+    nmc_number = models.CharField(max_length=50, blank=True, null=True)
     years_of_experience = models.PositiveIntegerField(blank=True, null=True)
-    details = models.TextField(blank=True)
+    details = RichTextField(blank=True)
     slug = models.SlugField(max_length=120, unique=True, blank=True)
 
     def save(self, *args, **kwargs):
@@ -141,3 +142,26 @@ class ContactMessage(models.Model):
     class Meta:
         verbose_name = "Contact Message"
         verbose_name_plural = "Contact Messages"
+
+
+class AboutUs(models.Model):
+    title = models.CharField(max_length=200, blank=True)
+    description = RichTextField(blank=True)
+
+    image = CloudinaryField(
+        "about_us_image",
+        blank=True,
+        null=True
+    )
+
+    mission = models.TextField(blank=True)
+    vision = models.TextField(blank=True)
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return "About Us Content"
+
+    class Meta:
+        verbose_name = "About Us"
+        verbose_name_plural = "About Us"

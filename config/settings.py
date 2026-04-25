@@ -18,7 +18,9 @@ SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "unsafe-default-key")
 DEBUG = os.environ.get("DEBUG", "False") == "True"
 ENVIRONMENT = os.environ.get("ENVIRONMENT", "development")
 IS_PRODUCTION = ENVIRONMENT == "production"
-
+CSRF_TRUSTED_ORIGINS = [
+    "https://fitapi.edutechsewa.com",
+]
 allowed_hosts_env = os.environ.get("ALLOWED_HOSTS")
 if allowed_hosts_env:
     ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_env.split(",")]

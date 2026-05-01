@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import HomePage, Doctor, Testimonial, ContactMessage, Service, AboutUs
+from .models import HomePage, Doctor, Testimonial, ContactMessage, Service, AboutUs, Milestone, Leader
 
 @admin.register(HomePage)
 class HomePageAdmin(admin.ModelAdmin):
@@ -9,9 +9,10 @@ class HomePageAdmin(admin.ModelAdmin):
     
 @admin.register(Doctor)
 class DoctorAdmin(admin.ModelAdmin):
-    list_display = ("name", "highest_degree", "nmc_number", "years_of_experience", "slug")
+    list_display = ("name", "highest_degree", "nmc_number", "years_of_experience", "order", "slug")
+    list_editable = ("order",)
     prepopulated_fields = {"slug": ("name",)}
-    search_fields = ("name", "highest_degree", "nmc_number")
+    search_fields = ("name", "highest_degree", "nmc_number", "leadership_role")
 
 class ServiceInline(admin.StackedInline):
     model = Service
@@ -43,9 +44,18 @@ class TestimonialAdmin(admin.ModelAdmin):
 
 @admin.register(ContactMessage)
 class ContactMessageAdmin(admin.ModelAdmin):
-    list_display = ("name", "email", "created_at")
+    list_display = ("first_name", "last_name", "email", "phone", "created_at")
+
+class MilestoneInline(admin.TabularInline):
+    model = Milestone
+    extra = 1
+
+class LeaderInline(admin.StackedInline):
+    model = Leader
+    extra = 1
 
 @admin.register(AboutUs)
 class AboutUsAdmin(admin.ModelAdmin):
     list_display = ['title', 'updated_at']
     readonly_fields = ['updated_at']
+    inlines = [MilestoneInline, LeaderInline]

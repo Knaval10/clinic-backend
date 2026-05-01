@@ -51,6 +51,9 @@ class Doctor(models.Model):
     highest_degree = models.CharField(max_length=100)
     nmc_number = models.CharField(max_length=50, blank=True, null=True)
     years_of_experience = models.PositiveIntegerField(blank=True, null=True)
+    
+    order = models.PositiveIntegerField(default=0)
+
     details = RichTextField(blank=True)
     slug = models.SlugField(max_length=120, unique=True, blank=True)
 
@@ -63,6 +66,7 @@ class Doctor(models.Model):
         return self.name
 
     class Meta:
+        ordering = ['order']
         verbose_name = "Doctor"
         verbose_name_plural = "Doctors"
 
@@ -130,14 +134,16 @@ class Testimonial(models.Model):
 
 
 class ContactMessage(models.Model):
-    name = models.CharField(max_length=100)
+    first_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100)
     email = models.EmailField()
-    subject = models.CharField(max_length=200, default="", blank=True)
+    phone = models.CharField(max_length=20, blank=True, null=True)
+    subject = models.CharField(max_length=200)
     message = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.name} - {self.email} - {self.subject}"
+        return f"{self.first_name} {self.last_name} - {self.email} - {self.subject}"
 
     class Meta:
         verbose_name = "Contact Message"
@@ -154,8 +160,9 @@ class AboutUs(models.Model):
         null=True
     )
 
-    mission = models.TextField(blank=True)
-    vision = models.TextField(blank=True)
+    journey_title = models.CharField(max_length=200, blank=True, default="Our Journey")
+    journey_subtitle = models.CharField(max_length=300, blank=True, default="From humble beginnings to a leading healthcare institution")
+    journey_description = RichTextField(blank=True)
 
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -165,3 +172,29 @@ class AboutUs(models.Model):
     class Meta:
         verbose_name = "About Us"
         verbose_name_plural = "About Us"
+
+
+class Milestone(models.Model):
+    about_us = models.ForeignKey(AboutUs, on_delete=models.CASCADE, related_name="milestones")
+    year = models.CharField(max_length=20)
+    event = models.TextField()
+
+    def __str__(self):
+        return f"{self.year} - Milestone"
+
+
+class Leader(models.Model):
+    about_us = models.ForeignKey(AboutUs, on_delete=models.CASCADE, related_name="leaders")
+    name = models.CharField(max_length=100)
+    role = models.CharField(max_length=100)
+    image = CloudinaryField(
+        "leader_image",
+        blank=True,
+        null=True
+    )
+    nmc_number = models.CharField(max_length=50, blank=True, null=True)
+    description = RichTextField(blank=True)
+
+    def __str__(self):
+        return self.name
+

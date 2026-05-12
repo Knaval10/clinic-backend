@@ -59,7 +59,13 @@ INSTALLED_APPS = [
     "ckeditor",
 
     # Local apps
-    "core",
+    "core",  # Kept for historical migrations and shared management commands.
+    "apps.homepage",
+    "apps.doctors",
+    "apps.services",
+    "apps.testimonials",
+    "apps.contact",
+    "apps.aboutus",
 ]
 
 # ----------------------

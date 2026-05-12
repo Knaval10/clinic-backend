@@ -1,6 +1,10 @@
 import os
 from django.core.management.base import BaseCommand
-from core.models import HomePage, Doctor, Testimonial, Service
+
+from apps.homepage.models import HomePage
+from apps.doctors.models import Doctor
+from apps.testimonials.models import Testimonial
+from apps.services.models import Service
 
 class Command(BaseCommand):
     help = 'Populates the database with fallback data manually'
